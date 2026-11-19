@@ -45,10 +45,10 @@ export function HeaderSection({
             className="flex-1 min-w-0 min-h-11 rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
           />
           <label
-            className="relative shrink-0 min-h-11 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 cursor-pointer active:scale-95 transition"
+            className="relative shrink-0 w-11 h-11 overflow-hidden rounded-xl border border-slate-300 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-700 cursor-pointer active:scale-95 transition"
             title="Elegir fecha en calendario"
           >
-            <Calendar className="w-4 h-4" />
+            <Calendar className="w-4 h-4 pointer-events-none" />
             <input
               type="date"
               aria-label="Seleccionar fecha en calendario"
@@ -59,7 +59,7 @@ export function HeaderSection({
                   onChangeDateIso(nextIso, formatDateToDisplay(nextIso));
                 }
               }}
-              className="absolute inset-0 opacity-0 cursor-pointer"
+              className="absolute inset-0 w-full h-full min-w-0 opacity-0 cursor-pointer"
             />
           </label>
         </div>

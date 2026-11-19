@@ -28,7 +28,7 @@ export function PreviewModal({
     const updateScale = () => {
       if (!containerRef.current) return;
       const availableWidth = containerRef.current.clientWidth - 24;
-      const nextScale = Math.min(1, Math.max(0.28, availableWidth / dims.width));
+      const nextScale = Math.min(1, Math.max(0.2, availableWidth / dims.width));
       setScale(nextScale);
     };
 
@@ -106,25 +106,25 @@ export function PreviewModal({
       </div>
 
       {/* Bottom Export Actions */}
-      <footer className="safe-area-bottom bg-white border-t border-slate-200 px-4 pt-3 shadow-[0_-4px_16px_rgba(15,23,42,0.06)]">
-        <div className="max-w-lg mx-auto grid grid-cols-2 gap-3">
+      <footer className="safe-area-bottom bg-white border-t border-slate-200 px-3 sm:px-4 pt-3 shadow-[0_-4px_16px_rgba(15,23,42,0.06)]">
+        <div className="max-w-lg mx-auto grid grid-cols-2 gap-2.5 sm:gap-3">
           <button
             type="button"
             disabled={isExporting}
             onClick={onShare}
-            className="min-h-12 rounded-xl bg-emerald-600 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-emerald-700 active:scale-[0.99] transition disabled:opacity-60"
+            className="min-w-0 min-h-12 px-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-emerald-700 active:scale-[0.99] transition disabled:opacity-60"
           >
-            <Share2 className="w-4 h-4" />
-            <span>Compartir PDF</span>
+            <Share2 className="w-4 h-4 shrink-0" />
+            <span className="truncate">Compartir PDF</span>
           </button>
           <button
             type="button"
             disabled={isExporting}
             onClick={onDownload}
-            className="min-h-12 rounded-xl bg-slate-900 text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-[0.99] transition disabled:opacity-60"
+            className="min-w-0 min-h-12 px-2.5 rounded-xl bg-slate-900 text-white font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 sm:gap-2 hover:bg-slate-800 active:scale-[0.99] transition disabled:opacity-60"
           >
-            <Download className="w-4 h-4" />
-            <span>Descargar PDF</span>
+            <Download className="w-4 h-4 shrink-0" />
+            <span className="truncate">Descargar PDF</span>
           </button>
         </div>
       </footer>

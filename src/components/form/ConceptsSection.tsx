@@ -99,7 +99,7 @@ export function ConceptsSection({ concepts, onChange }: ConceptsSectionProps) {
               </div>
 
               <div className="grid grid-cols-12 gap-2.5 items-end">
-                <div className="col-span-4 space-y-1.5">
+                <div className="col-span-4 min-w-0 space-y-1.5">
                   <label
                     htmlFor={`concept-qty-${item.id}`}
                     className="block text-xs font-semibold text-slate-600"
@@ -123,7 +123,7 @@ export function ConceptsSection({ concepts, onChange }: ConceptsSectionProps) {
                   />
                 </div>
 
-                <div className="col-span-8 space-y-1.5">
+                <div className="col-span-8 min-w-0 space-y-1.5">
                   <label
                     htmlFor={`concept-price-${item.id}`}
                     className="block text-xs font-semibold text-slate-600"

@@ -16,10 +16,10 @@ export function ClientSection({ client, onChange }: ClientSectionProps) {
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 space-y-3.5">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-slate-500" />
-          <h2 className="text-sm font-bold text-slate-800 tracking-tight">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <Building2 className="w-4 h-4 text-slate-500 shrink-0" />
+          <h2 className="text-sm font-bold text-slate-800 tracking-tight truncate">
             Datos del Cliente (a quien se cobra)
           </h2>
         </div>
@@ -29,7 +29,7 @@ export function ClientSection({ client, onChange }: ClientSectionProps) {
             onClick={() =>
               onChange({ name: '', documentType: '', documentNumber: '', address: '' })
             }
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-rose-600 px-2 py-1 rounded-lg hover:bg-rose-50 transition"
+            className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-rose-600 px-2 py-1 rounded-lg hover:bg-rose-50 transition"
           >
             <Eraser className="w-3.5 h-3.5" />
             <span>Limpiar</span>
@@ -64,7 +64,7 @@ export function ClientSection({ client, onChange }: ClientSectionProps) {
           Documento del cliente (NIT, C.C., C.E., etc.)
         </label>
         <div className="grid grid-cols-12 gap-2.5">
-          <div className="col-span-4">
+          <div className="col-span-4 min-w-0">
             <input
               id="client-doc-type"
               type="text"
@@ -83,7 +83,7 @@ export function ClientSection({ client, onChange }: ClientSectionProps) {
               <option value="PAS." />
             </datalist>
           </div>
-          <div className="col-span-8">
+          <div className="col-span-8 min-w-0">
             <input
               id="client-doc-number"
               type="text"

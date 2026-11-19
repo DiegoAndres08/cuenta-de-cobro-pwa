@@ -92,7 +92,7 @@ export function CreditorSection({ creditor, onChange }: CreditorSectionProps) {
               Documento del acreedor (C.C., C.E., NIT, etc.)
             </label>
             <div className="grid grid-cols-12 gap-2.5">
-              <div className="col-span-4">
+              <div className="col-span-4 min-w-0">
                 <input
                   id="creditor-doc-type"
                   type="text"
@@ -113,7 +113,7 @@ export function CreditorSection({ creditor, onChange }: CreditorSectionProps) {
                   <option value="PAS." />
                 </datalist>
               </div>
-              <div className="col-span-8">
+              <div className="col-span-8 min-w-0">
                 <input
                   id="creditor-doc-number"
                   type="text"

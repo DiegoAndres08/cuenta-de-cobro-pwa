@@ -146,7 +146,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-slate-100">
+    <div className="min-h-dvh w-full max-w-full overflow-x-clip flex flex-col bg-slate-100">
       <HeaderBar
         isOffline={isOffline}
         canInstall={Boolean(installPrompt)}
