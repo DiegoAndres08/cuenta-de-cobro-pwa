@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ListOrdered, Plus, Trash2 } from 'lucide-react';
 import type { ConceptItem } from '../../types/invoice';
 import {
@@ -13,9 +14,42 @@ interface ConceptsSectionProps {
   onChange: (next: ConceptItem[]) => void;
 }
 
+const MAX_QUANTITY = 999_999;
+
 export function ConceptsSection({ concepts, onChange }: ConceptsSectionProps) {
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({});
+
+  const clearQuantityDraft = (id: string) => {
+    setQuantityDrafts((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
   const handleUpdate = (id: string, patch: Partial<ConceptItem>) => {
     onChange(concepts.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  };
+
+  const handleQuantityChange = (id: string, rawValue: string) => {
+    const digits = rawValue.replace(/\D/g, '');
+    if (!digits) {
+      setQuantityDrafts((prev) => ({ ...prev, [id]: '' }));
+      handleUpdate(id, { quantity: 1 });
+      return;
+    }
+
+    const parsed = Number.parseInt(digits, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setQuantityDrafts((prev) => ({ ...prev, [id]: digits }));
+      handleUpdate(id, { quantity: 1 });
+      return;
+    }
+
+    const clamped = Math.min(parsed, MAX_QUANTITY);
+    clearQuantityDraft(id);
+    handleUpdate(id, { quantity: clamped });
   };
 
   const handleAdd = () => {
@@ -31,6 +65,7 @@ export function ConceptsSection({ concepts, onChange }: ConceptsSectionProps) {
   };
 
   const handleRemove = (id: string) => {
+    clearQuantityDraft(id);
     if (concepts.length <= 1) {
       onChange([
         {
@@ -108,18 +143,19 @@ export function ConceptsSection({ concepts, onChange }: ConceptsSectionProps) {
                   </label>
                   <input
                     id={`concept-qty-${item.id}`}
-                    type="number"
-                    min={1}
-                    step={1}
+                    type="text"
                     inputMode="numeric"
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const val = Number.parseInt(e.target.value, 10);
-                      handleUpdate(item.id, {
-                        quantity: Number.isFinite(val) && val > 0 ? val : 1,
-                      });
-                    }}
-                    className="w-full min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
+                    pattern="[0-9]*"
+                    required
+                    value={
+                      item.id in quantityDrafts
+                        ? quantityDrafts[item.id]
+                        : String(item.quantity)
+                    }
+                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                    onBlur={() => clearQuantityDraft(item.id)}
+                    placeholder="1"
+                    className="w-full min-h-11 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition"
                   />
                 </div>
 
