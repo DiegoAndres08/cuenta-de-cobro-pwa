@@ -53,6 +53,16 @@ export function incrementConsecutive(current: string): string {
 }
 
 /**
+ * Converts YYYY-MM-DD into "DD/MM/YYYY" (used in Cotización header).
+ */
+export function formatDateToSlashDisplay(isoDate: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
+  if (!match) return isoDate;
+  const [, year, monthStr, dayStr] = match;
+  return `${dayStr}/${monthStr}/${year}`;
+}
+
+/**
  * Builds a clean PDF filename from the consecutive text.
  * Example: "Cuenta de cobro 001" -> "Cuenta_de_cobro_001.pdf"
  */
@@ -64,4 +74,20 @@ export function buildPdfFilename(consecutive: string): string {
     .replace(/[^a-zA-Z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
   return `${sanitized || 'Cuenta_de_cobro'}.pdf`;
+}
+
+/**
+ * Builds a clean PDF filename for a quote using subject and client name.
+ * Example: ("Cotización", "Cliente Ejemplo S.A.S.") -> "Cotizacion_Cliente_Ejemplo_S_A_S.pdf"
+ */
+export function buildQuotePdfFilename(subject: string, clientName: string): string {
+  const raw = [subject.trim() || 'Cotizacion', clientName.trim()]
+    .filter(Boolean)
+    .join('_');
+  const sanitized = raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return `${sanitized || 'Cotizacion'}.pdf`;
 }

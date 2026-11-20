@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Download, Share2 } from 'lucide-react';
 import type { InvoiceData, PageSize } from '../../types/invoice';
+import type { DocumentTab, QuoteData } from '../../types/quote';
 import { DocumentSheet, SHEET_DIMENSIONS } from './DocumentSheet';
+import { QuoteDocumentSheet } from './QuoteDocumentSheet';
 
 interface PreviewModalProps {
+  activeTab: DocumentTab;
   invoice: InvoiceData;
+  quote: QuoteData;
   onClose: () => void;
   onChangePageSize: (size: PageSize) => void;
   onDownload: () => void;
@@ -13,7 +17,9 @@ interface PreviewModalProps {
 }
 
 export function PreviewModal({
+  activeTab,
   invoice,
+  quote,
   onClose,
   onChangePageSize,
   onDownload,
@@ -22,7 +28,8 @@ export function PreviewModal({
 }: PreviewModalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.45);
-  const dims = SHEET_DIMENSIONS[invoice.pageSize];
+  const pageSize = activeTab === 'quote' ? quote.pageSize : invoice.pageSize;
+  const dims = SHEET_DIMENSIONS[pageSize];
 
   useEffect(() => {
     const updateScale = () => {
@@ -60,7 +67,7 @@ export function PreviewModal({
             type="button"
             onClick={() => onChangePageSize('letter')}
             className={`px-3 py-1.5 rounded-lg transition ${
-              invoice.pageSize === 'letter'
+              pageSize === 'letter'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-300 hover:text-white'
             }`}
@@ -71,7 +78,7 @@ export function PreviewModal({
             type="button"
             onClick={() => onChangePageSize('a4')}
             className={`px-3 py-1.5 rounded-lg transition ${
-              invoice.pageSize === 'a4'
+              pageSize === 'a4'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-300 hover:text-white'
             }`}
@@ -89,7 +96,7 @@ export function PreviewModal({
         <div
           style={{
             width: `${dims.width * scale}px`,
-            height: `${dims.height * scale}px`,
+            minHeight: `${dims.height * scale}px`,
           }}
           className="relative shrink-0"
         >
@@ -100,7 +107,11 @@ export function PreviewModal({
               width: `${dims.width}px`,
             }}
           >
-            <DocumentSheet invoice={invoice} />
+            {activeTab === 'quote' ? (
+              <QuoteDocumentSheet quote={quote} />
+            ) : (
+              <DocumentSheet invoice={invoice} />
+            )}
           </div>
         </div>
       </div>
