@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ActionBar } from './components/ActionBar';
 import { HeaderBar } from './components/HeaderBar';
+import { SavedDocumentsModal } from './components/SavedDocumentsModal';
+import { SavedToolbar } from './components/SavedToolbar';
 import { ClientSection } from './components/form/ClientSection';
 import { ConceptsSection } from './components/form/ConceptsSection';
 import { CreditorSection } from './components/form/CreditorSection';
@@ -35,6 +37,22 @@ import {
   saveCreditorProfile,
   saveInvoiceDraft,
 } from './utils/storage';
+import {
+  type SavedInvoiceRecord,
+  type SavedQuoteRecord,
+  cloneInvoiceData,
+  cloneQuoteData,
+  deleteSavedInvoice,
+  deleteSavedQuote,
+  duplicateInvoiceForToday,
+  duplicateQuoteForToday,
+  loadSavedInvoices,
+  loadSavedQuotes,
+  persistSavedInvoices,
+  persistSavedQuotes,
+  upsertSavedInvoice,
+  upsertSavedQuote,
+} from './utils/savedDocumentsStorage';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -54,6 +72,15 @@ export function App() {
   const [activeTab, setActiveTab] = useState<DocumentTab>(() => loadInitialTab());
   const [invoice, setInvoice] = useState<InvoiceData>(() => loadInvoiceDraft());
   const [quote, setQuote] = useState<QuoteData>(() => loadQuoteDraft());
+  const [savedInvoices, setSavedInvoices] = useState<SavedInvoiceRecord[]>(() =>
+    loadSavedInvoices()
+  );
+  const [savedQuotes, setSavedQuotes] = useState<SavedQuoteRecord[]>(() =>
+    loadSavedQuotes()
+  );
+  const [activeSavedInvoiceId, setActiveSavedInvoiceId] = useState<string | null>(null);
+  const [activeSavedQuoteId, setActiveSavedQuoteId] = useState<string | null>(null);
+  const [showSavedModal, setShowSavedModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isOffline, setIsOffline] = useState(
@@ -92,6 +119,15 @@ export function App() {
   useEffect(() => {
     saveQuoteDraft(quote);
   }, [quote]);
+
+  // Independent localStorage persistence for saved documents per tab
+  useEffect(() => {
+    persistSavedInvoices(savedInvoices);
+  }, [savedInvoices]);
+
+  useEffect(() => {
+    persistSavedQuotes(savedQuotes);
+  }, [savedQuotes]);
 
   // Online / Offline indicator
   useEffect(() => {
@@ -146,6 +182,7 @@ export function App() {
     const todayIso = getTodayIso();
 
     if (activeTab === 'quote') {
+      setActiveSavedQuoteId(null);
       setQuote((prev) => ({
         ...prev,
         dateIso: todayIso,
@@ -162,6 +199,7 @@ export function App() {
       return;
     }
 
+    setActiveSavedInvoiceId(null);
     setInvoice((prev) => ({
       ...prev,
       dateIso: todayIso,
@@ -179,6 +217,136 @@ export function App() {
     }));
     showToast('Nueva cuenta lista (consecutivo incrementado)');
   };
+
+  const handleSaveCurrentDocument = (saveAsNew = false) => {
+    if (activeTab === 'quote') {
+      const targetId = saveAsNew ? null : activeSavedQuoteId;
+      const { records, record, isUpdate } = upsertSavedQuote(
+        savedQuotes,
+        quote,
+        targetId
+      );
+      setSavedQuotes(records);
+      setActiveSavedQuoteId(record.id);
+      showToast(isUpdate ? 'Cotización actualizada' : 'Cotización guardada');
+      return;
+    }
+
+    const targetId = saveAsNew ? null : activeSavedInvoiceId;
+    const { records, record, isUpdate } = upsertSavedInvoice(
+      savedInvoices,
+      invoice,
+      targetId
+    );
+    setSavedInvoices(records);
+    setActiveSavedInvoiceId(record.id);
+    showToast(isUpdate ? 'Cuenta de cobro actualizada' : 'Cuenta de cobro guardada');
+  };
+
+  const handleLoadSavedInvoice = (record: SavedInvoiceRecord) => {
+    const loaded = cloneInvoiceData(record.data);
+    const hasRecordCreditor = Boolean(
+      loaded.creditor.fullName.trim() ||
+        loaded.creditor.documentNumber.trim() ||
+        loaded.creditor.phone.trim()
+    );
+    setInvoice((prev) => ({
+      ...loaded,
+      creditor: hasRecordCreditor ? loaded.creditor : prev.creditor,
+    }));
+    setActiveSavedInvoiceId(record.id);
+    setShowSavedModal(false);
+    showToast('Cuenta cargada para editar');
+  };
+
+  const handleDuplicateSavedInvoice = (record: SavedInvoiceRecord) => {
+    const duplicated = duplicateInvoiceForToday(record.data);
+    const hasRecordCreditor = Boolean(
+      duplicated.creditor.fullName.trim() ||
+        duplicated.creditor.documentNumber.trim() ||
+        duplicated.creditor.phone.trim()
+    );
+    setInvoice((prev) => ({
+      ...duplicated,
+      creditor: hasRecordCreditor ? duplicated.creditor : prev.creditor,
+    }));
+    setActiveSavedInvoiceId(null);
+    setShowSavedModal(false);
+    showToast('Copia lista para editar (toca Guardar para conservarla)');
+  };
+
+  const handleDeleteSavedInvoice = (id: string) => {
+    setSavedInvoices((prev) => deleteSavedInvoice(prev, id));
+    if (activeSavedInvoiceId === id) {
+      setActiveSavedInvoiceId(null);
+    }
+    showToast('Cuenta eliminada de guardadas');
+  };
+
+  const handleLoadSavedQuote = (record: SavedQuoteRecord) => {
+    const loaded = cloneQuoteData(record.data);
+    const hasRecordIssuer = Boolean(
+      loaded.issuer.companyName.trim() ||
+        loaded.issuer.companyNit.trim() ||
+        loaded.issuer.signerName.trim()
+    );
+    setQuote((prev) => ({
+      ...loaded,
+      issuer: hasRecordIssuer ? loaded.issuer : prev.issuer,
+    }));
+    setActiveSavedQuoteId(record.id);
+    setShowSavedModal(false);
+    showToast('Cotización cargada para editar');
+  };
+
+  const handleDuplicateSavedQuote = (record: SavedQuoteRecord) => {
+    const duplicated = duplicateQuoteForToday(record.data);
+    const hasRecordIssuer = Boolean(
+      duplicated.issuer.companyName.trim() ||
+        duplicated.issuer.companyNit.trim() ||
+        duplicated.issuer.signerName.trim()
+    );
+    setQuote((prev) => ({
+      ...duplicated,
+      issuer: hasRecordIssuer ? duplicated.issuer : prev.issuer,
+    }));
+    setActiveSavedQuoteId(null);
+    setShowSavedModal(false);
+    showToast('Copia lista para editar (toca Guardar para conservarla)');
+  };
+
+  const handleDeleteSavedQuote = (id: string) => {
+    setSavedQuotes((prev) => deleteSavedQuote(prev, id));
+    if (activeSavedQuoteId === id) {
+      setActiveSavedQuoteId(null);
+    }
+    showToast('Cotización eliminada de guardadas');
+  };
+
+  const activeSavedId =
+    activeTab === 'quote' ? activeSavedQuoteId : activeSavedInvoiceId;
+
+  const editingSavedLabel = (() => {
+    if (activeTab === 'quote' && activeSavedQuoteId) {
+      const rec = savedQuotes.find((r) => r.id === activeSavedQuoteId);
+      if (!rec) return null;
+      return (
+        rec.data.clientName.trim() ||
+        rec.data.subject.trim() ||
+        'Cotización guardada'
+      );
+    }
+    if (activeTab === 'invoice' && activeSavedInvoiceId) {
+      const rec = savedInvoices.find((r) => r.id === activeSavedInvoiceId);
+      if (!rec) return null;
+      return (
+        rec.data.client.name.trim() ||
+        rec.data.consecutive.trim() ||
+        'Cuenta guardada'
+      );
+    }
+    return null;
+  })();
 
   const handleDownloadPdf = () => {
     setIsExporting(true);
@@ -230,6 +398,7 @@ export function App() {
         activeTab={activeTab}
         onChangeTab={(tab) => {
           setShowPreview(false);
+          setShowSavedModal(false);
           setActiveTab(tab);
         }}
         isOffline={isOffline}
@@ -239,6 +408,16 @@ export function App() {
       />
 
       <main className="flex-1 w-full max-w-lg mx-auto px-3.5 pt-4 pb-28 space-y-4">
+        <SavedToolbar
+          activeTab={activeTab}
+          savedCount={
+            activeTab === 'quote' ? savedQuotes.length : savedInvoices.length
+          }
+          editingLabel={editingSavedLabel}
+          onOpenSaved={() => setShowSavedModal(true)}
+          onSave={() => handleSaveCurrentDocument(false)}
+          onSaveAsNew={() => handleSaveCurrentDocument(true)}
+        />
         {activeTab === 'invoice' ? (
           <>
             <HeaderSection
@@ -366,6 +545,22 @@ export function App() {
         onDownload={handleDownloadPdf}
         isExporting={isExporting}
       />
+
+      {showSavedModal && (
+        <SavedDocumentsModal
+          activeTab={activeTab}
+          savedInvoices={savedInvoices}
+          savedQuotes={savedQuotes}
+          activeSavedId={activeSavedId}
+          onClose={() => setShowSavedModal(false)}
+          onLoadInvoice={handleLoadSavedInvoice}
+          onDuplicateInvoice={handleDuplicateSavedInvoice}
+          onDeleteInvoice={handleDeleteSavedInvoice}
+          onLoadQuote={handleLoadSavedQuote}
+          onDuplicateQuote={handleDuplicateSavedQuote}
+          onDeleteQuote={handleDeleteSavedQuote}
+        />
+      )}
 
       {showPreview && (
         <PreviewModal
